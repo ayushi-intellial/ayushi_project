@@ -27,15 +27,34 @@ def upload_view(request):
         comparison_results_for_template = []
         comparison_results_for_json = []
 
+        def highlight_diff_row(row):
+            style = pd.Series('', index=row.index)
+            master_cols = [c for c in row.index if '_master' in c]
+            for master_col in master_cols:
+                col_name = master_col.replace('_master', '')
+                target_col = f'{col_name}_target'
+                if target_col in row.index:
+                    # Convert to string to avoid dtype mismatches
+                    if str(row[master_col]) != str(row[target_col]):
+                        style[master_col] = 'background-color: #ffc107'
+                        style[target_col] = 'background-color: #ffc107'
+            return style
+
         for target_path in target_file_paths:
             target_data = parse_file(target_path)
             comparison = compare_boms(master_bom_data, target_data)
+
+            modified_df = comparison.get('modified', pd.DataFrame())
+            if not modified_df.empty:
+                modified_html = modified_df.style.apply(highlight_diff_row, axis=1).to_html(classes='table table-bordered', index=False)
+            else:
+                modified_html = "<p>No modified items.</p>"
 
             comparison_for_template = {
                 'filename': os.path.basename(target_path),
                 'comparison': {
                     'unchanged': comparison.get('unchanged', pd.DataFrame()).to_html(classes='table table-success', index=False),
-                    'modified': comparison.get('modified', pd.DataFrame()).to_html(classes='table table-warning', index=False),
+                    'modified': modified_html,
                     'added': comparison.get('added', pd.DataFrame()).to_html(classes='table table-info', index=False),
                     'deleted': comparison.get('deleted', pd.DataFrame()).to_html(classes='table table-danger', index=False),
                 }
