@@ -15,7 +15,8 @@ def parse_file(file_path):
     extension = extension.lower()
 
     if extension == '.xlsx':
-        return pd.read_excel(file_path)
+        # Use read_only mode for potentially large Excel files
+        return pd.read_excel(file_path, engine='openpyxl', engine_kwargs={'read_only': True})
     elif extension == '.csv':
         return pd.read_csv(file_path)
     elif extension == '.docx':
