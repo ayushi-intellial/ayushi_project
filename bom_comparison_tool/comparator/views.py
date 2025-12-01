@@ -1,4 +1,5 @@
 import json
+import io
 from django.shortcuts import render
 from django.http import HttpResponse, JsonResponse
 from django.core.files.storage import FileSystemStorage
@@ -92,3 +93,37 @@ def download_json(request):
         return response
     else:
         return HttpResponse("No comparison results found.")
+
+def download_excel(request):
+    comparison_results = request.session.get('comparison_results')
+    if not comparison_results:
+        return HttpResponse("No comparison results found.")
+
+    output = io.BytesIO()
+    with pd.ExcelWriter(output, engine='openpyxl') as writer:
+        for i, result in enumerate(comparison_results):
+            filename = result.get('filename', f'target_{i+1}')
+            # Keep sheet names under 31 characters
+            short_filename = (filename[:20] + '...') if len(filename) > 23 else filename
+
+            unchanged_df = pd.DataFrame(result['comparison']['unchanged'])
+            modified_df = pd.DataFrame(result['comparison']['modified'])
+            added_df = pd.DataFrame(result['comparison']['added'])
+            deleted_df = pd.DataFrame(result['comparison']['deleted'])
+
+            if not unchanged_df.empty:
+                unchanged_df.to_excel(writer, sheet_name=f"{short_filename}_unchanged", index=False)
+            if not modified_df.empty:
+                modified_df.to_excel(writer, sheet_name=f"{short_filename}_modified", index=False)
+            if not added_df.empty:
+                added_df.to_excel(writer, sheet_name=f"{short_filename}_added", index=False)
+            if not deleted_df.empty:
+                deleted_df.to_excel(writer, sheet_name=f"{short_filename}_deleted", index=False)
+
+    output.seek(0)
+    response = HttpResponse(
+        output,
+        content_type='application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+    )
+    response['Content-Disposition'] = 'attachment; filename="bom_comparison_results.xlsx"'
+    return response

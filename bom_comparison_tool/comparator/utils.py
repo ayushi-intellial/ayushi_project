@@ -1,7 +1,14 @@
 import os
+import re
 import pandas as pd
 import docx
 from PyPDF2 import PdfReader
+
+def normalize_mpn(mpn):
+    """Converts to uppercase and removes all non-alphanumeric characters."""
+    if not isinstance(mpn, str):
+        return ''
+    return re.sub(r'[^A-Z0-9]', '', mpn.upper())
 
 def parse_file(file_path):
     _, extension = os.path.splitext(file_path)
@@ -39,20 +46,38 @@ def compare_boms(master_bom, target_bom):
     master_bom = master_bom.astype(str)
     target_bom = target_bom.astype(str)
     
-    merged_bom = pd.merge(master_bom, target_bom, on='MPN', how='outer', indicator=True, suffixes=('_master', '_target'))
+    master_bom['normalized_MPN'] = master_bom['MPN'].apply(normalize_mpn)
+    target_bom['normalized_MPN'] = target_bom['MPN'].apply(normalize_mpn)
 
-    unchanged = merged_bom[merged_bom['_merge'] == 'both']
-    unchanged = unchanged[unchanged.apply(lambda x: x.filter(like='_master').equals(x.filter(like='_target')), axis=1)]
+    merged_bom = pd.merge(master_bom, target_bom, on='normalized_MPN', how='outer', indicator=True, suffixes=('_master', '_target'))
 
-    modified = merged_bom[merged_bom['_merge'] == 'both']
-    modified = modified[~modified.index.isin(unchanged.index)]
+    both = merged_bom[merged_bom['_merge'] == 'both'].copy()
+    
+    # This is complex. Let's make it more readable.
+    # Get the columns to compare, excluding the original MPN and normalized MPN
+    master_cols = [c for c in master_bom.columns if c not in ['MPN', 'normalized_MPN']]
+    
+    are_equal = pd.Series(True, index=both.index)
+    for col in master_cols:
+        are_equal &= (both[f'{col}_master'] == both[f'{col}_target'])
 
-    added = merged_bom[merged_bom['_merge'] == 'right_only']
-    deleted = merged_bom[merged_bom['_merge'] == 'left_only']
+    unchanged = both[are_equal]
+    modified = both[~are_equal]
 
-    return {
+    added = merged_bom[merged_bom['_merge'] == 'right_only'].copy()
+    deleted = merged_bom[merged_bom['_merge'] == 'left_only'].copy()
+
+    results = {
         'unchanged': unchanged,
         'modified': modified,
         'added': added,
         'deleted': deleted
     }
+
+    for key in results:
+        if 'normalized_MPN' in results[key].columns:
+            results[key] = results[key].drop(columns=['normalized_MPN'])
+        if '_merge' in results[key].columns:
+            results[key] = results[key].drop(columns=['_merge'])
+
+    return results
