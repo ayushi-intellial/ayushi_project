@@ -524,3 +524,7 @@ implement fuzzy matching
 
 **User Prompt:**
 can i create a ml model for that to comparing data sets and then train on them
+
+
+Error when talking to Gemini API Full report available at: C:\Users\Admin\AppData\Local\Temp\gemini-client-error-Turn.run-sendMessageStream-2025-12-01T12-39-08-232Z.json
+[API Error: You have exhausted your capacity on this model. Your quota will reset after 16h1m28s.]
