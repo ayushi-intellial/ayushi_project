@@ -520,7 +520,7 @@ update my project with more advanced features and make code optimize
 **User Prompt:**
 implement fuzzy matching
 
-## 15. Fuzzy Matching Implementation Confirmation
+## 15. ML models
 
 **User Prompt:**
 can i create a ml model for that to comparing data sets and then train on them
