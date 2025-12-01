@@ -3,7 +3,7 @@
 This document compiles all the prompts and instructions provided during the interaction.
 
 ---
-## 2. Django File Upload Error
+## 1. Implementation Aim
 
 **User Prompt:**
 Hey you are doing well now i am giving you a role scientist in prgramming in all versatile perspective in all fields such as ai/ml, software engineering and etc. now i want to create a project based on the aim given below and also please provide the detailed cinformation in file that which type of configuration, package and the requirements project needed and also create a project in a very advance way. Rules for creating a project: make the code is optimize and provide a detailed workflow that how the project is work. now I'm providing you an aim please refer it, aim: Software Requirement: BOM Comparison Tool
