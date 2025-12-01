@@ -43,35 +43,58 @@ def upload_view(request):
 
         for target_path in target_file_paths:
             target_data = parse_file(target_path)
-            comparison = compare_boms(master_bom_data, target_data)
+            comparison_result = compare_boms(master_bom_data, target_data)
 
-            modified_df = comparison.get('modified', pd.DataFrame())
-            if not modified_df.empty:
-                modified_html = modified_df.style.apply(highlight_diff_row, axis=1).to_html(classes='table table-bordered', index=False)
+            if 'error' in comparison_result:
+                error_message = comparison_result['error']
+                
+                # Get column names for debugging
+                master_cols = master_bom_data.columns.tolist() if isinstance(master_bom_data, pd.DataFrame) else []
+                target_cols = target_data.columns.tolist() if isinstance(target_data, pd.DataFrame) else []
+
+                comparison_for_template = {
+                    'filename': os.path.basename(target_path),
+                    'error': error_message,
+                    'master_columns': master_cols,
+                    'target_columns': target_cols,
+                }
+                comparison_results_for_template.append(comparison_for_template)
+
+                comparison_for_json = {
+                    'filename': os.path.basename(target_path),
+                    'error': error_message,
+                    'master_columns': master_cols,
+                    'target_columns': target_cols,
+                }
+                comparison_results_for_json.append(comparison_for_json)
             else:
-                modified_html = "<p>No modified items.</p>"
+                modified_df = comparison_result.get('modified', pd.DataFrame())
+                if not modified_df.empty:
+                    modified_html = modified_df.style.apply(highlight_diff_row, axis=1).to_html(classes='table table-bordered', index=False)
+                else:
+                    modified_html = "<p>No modified items.</p>"
 
-            comparison_for_template = {
-                'filename': os.path.basename(target_path),
-                'comparison': {
-                    'unchanged': comparison.get('unchanged', pd.DataFrame()).to_html(classes='table table-success', index=False),
-                    'modified': modified_html,
-                    'added': comparison.get('added', pd.DataFrame()).to_html(classes='table table-info', index=False),
-                    'deleted': comparison.get('deleted', pd.DataFrame()).to_html(classes='table table-danger', index=False),
+                comparison_for_template = {
+                    'filename': os.path.basename(target_path),
+                    'comparison': {
+                        'unchanged': comparison_result.get('unchanged', pd.DataFrame()).to_html(classes='table table-success', index=False),
+                        'modified': modified_html,
+                        'added': comparison_result.get('added', pd.DataFrame()).to_html(classes='table table-info', index=False),
+                        'deleted': comparison_result.get('deleted', pd.DataFrame()).to_html(classes='table table-danger', index=False),
+                    }
                 }
-            }
-            comparison_results_for_template.append(comparison_for_template)
-            
-            comparison_for_json = {
-                'filename': os.path.basename(target_path),
-                'comparison': {
-                    'unchanged': comparison.get('unchanged', pd.DataFrame()).to_dict('records'),
-                    'modified': comparison.get('modified', pd.DataFrame()).to_dict('records'),
-                    'added': comparison.get('added', pd.DataFrame()).to_dict('records'),
-                    'deleted': comparison.get('deleted', pd.DataFrame()).to_dict('records'),
+                comparison_results_for_template.append(comparison_for_template)
+                
+                comparison_for_json = {
+                    'filename': os.path.basename(target_path),
+                    'comparison': {
+                        'unchanged': comparison_result.get('unchanged', pd.DataFrame()).to_dict('records'),
+                        'modified': comparison_result.get('modified', pd.DataFrame()).to_dict('records'),
+                        'added': comparison_result.get('added', pd.DataFrame()).to_dict('records'),
+                        'deleted': comparison_result.get('deleted', pd.DataFrame()).to_dict('records'),
+                    }
                 }
-            }
-            comparison_results_for_json.append(comparison_for_json)
+                comparison_results_for_json.append(comparison_for_json)
 
 
         # Storing comparison_results in session to be accessible by download_json

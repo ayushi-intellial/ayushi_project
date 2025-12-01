@@ -46,25 +46,37 @@
                     <h2>Comparison with: {{ result.filename }}</h2>
                 </div>
                 <div class="card-body">
-                    <h3 class="mt-3">Unchanged</h3>
-                    <div class="table-responsive">
-                        {{ result.comparison.unchanged|safe }}
-                    </div>
+                    {% if result.error %}
+                        <div class="alert alert-danger" role="alert">
+                            <strong>Error:</strong> {{ result.error }}
+                            {% if result.master_columns %}
+                                <p class="mb-0"><strong>Master BOM Columns Detected:</strong> {{ result.master_columns|join:", " }}</p>
+                            {% endif %}
+                            {% if result.target_columns %}
+                                <p class="mb-0"><strong>Target BOM Columns Detected:</strong> {{ result.target_columns|join:", " }}</p>
+                            {% endif %}
+                        </div>
+                    {% else %}
+                        <h3 class="mt-3">Unchanged</h3>
+                        <div class="table-responsive">
+                            {{ result.comparison.unchanged|safe }}
+                        </div>
 
-                    <h3 class="mt-3">Modified</h3>
-                    <div class="table-responsive">
-                        {{ result.comparison.modified|safe }}
-                    </div>
+                        <h3 class="mt-3">Modified</h3>
+                        <div class="table-responsive">
+                            {{ result.comparison.modified|safe }}
+                        </div>
 
-                    <h3 class="mt-3">Added to {{ result.filename }}</h3>
-                    <div class="table-responsive">
-                        {{ result.comparison.added|safe }}
-                    </div>
+                        <h3 class="mt-3">Added to {{ result.filename }}</h3>
+                        <div class="table-responsive">
+                            {{ result.comparison.added|safe }}
+                        </div>
 
-                    <h3 class="mt-3">Deleted from {{ result.filename }}</h3>
-                    <div class="table-responsive">
-                        {{ result.comparison.deleted|safe }}
-                    </div>
+                        <h3 class="mt-3">Deleted from {{ result.filename }}</h3>
+                        <div class="table-responsive">
+                            {{ result.comparison.deleted|safe }}
+                        </div>
+                    {% endif %}
                 </div>
             </div>
         {% endfor %}
