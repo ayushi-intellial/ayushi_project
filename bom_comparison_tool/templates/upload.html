@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>BOM Comparison Tool</title>
+</head>
+<body>
+    <h1>BOM Comparison Tool</h1>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <label for="master_bom">Master BOM (XLSX):</label><br>
+        <input type="file" id="master_bom" name="master_bom">
+        <br><br>
+        <label for="target_files">Target Files (CSV, XLSX, DOCX, PDF, TXT):</label><br>
+        <input type="file" id="target_files" name="target_files" multiple>
+        <br><br>
+        <input type="submit" value="Compare">
+    </form>
+</body>
+</html>

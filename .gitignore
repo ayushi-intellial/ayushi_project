@@ -1,0 +1,14 @@
+# Virtual environment
+venv/
+
+# Django project files
+db.sqlite3
+media/
+
+# Python cache files
+__pycache__/
+*.pyc
+
+# Other
+.env
+agents_prompt.md
